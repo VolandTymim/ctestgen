@@ -1,5 +1,5 @@
 import re
-from typing import List
+from collections.abc import Iterable
 
 
 class Operator:
@@ -10,7 +10,7 @@ class Operator:
         self.is_repeatable = is_repeatable
 
     def generate_operator_code(self, *args):
-        if args and isinstance(args[0], List):
+        if args and isinstance(args[0], Iterable):
             args = args[0]
         if len(args) == self.arguments_count:
             return self.operator_definition.format(args=args)
@@ -72,7 +72,7 @@ class SubscriptOperator(Operator):
         super().__init__('[]')
 
     def __call__(self, *args):
-        if args and isinstance(args[0], List):
+        if args and isinstance(args[0], Iterable):
             args = args[0]
         assert (len(args) > 1), \
             'Arguments count in call not match operator`s minimal arguments count'
@@ -98,7 +98,7 @@ class _CallOperator(Operator):
         super().__init__('()')
 
     def __call__(self, *args):
-        if args and isinstance(args[0], List):
+        if args and isinstance(args[0], Iterable):
             args = args[0]
         assert (len(args) > 1), \
             'Arguments count in call not match operator`s minimal arguments count'

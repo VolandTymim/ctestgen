@@ -4,6 +4,7 @@ import sys
 from datetime import datetime
 import pathlib
 import enum
+import json
 
 
 def find_tests(base_dir, test_filename_extensions):
@@ -48,12 +49,12 @@ def _init_output_text_file(filename, tests, output_dir):
     return output_file_path
 
 
-def init_success_output_file(tests, output_dir):
+def init_successful_output_file(tests, output_dir):
     success_output_filename = 'success.txt'
     return _init_output_text_file(success_output_filename, tests, output_dir)
 
 
-def init_fail_output_file(tests, output_dir):
+def init_failed_output_file(tests, output_dir):
     fail_output_filename = 'fail.txt'
     return _init_output_text_file(fail_output_filename, tests, output_dir)
 
@@ -63,7 +64,19 @@ def init_metrics_output_file(tests, output_dir):
     return _init_output_text_file(metrics_output_filename, tests, output_dir)
 
 
-def find_compiler_environment_variables():
+def _init_output_json_file(filename, output_dir):
+    output_file_path = os.path.join(output_dir, filename)
+    output_file = open(output_file_path, 'w')
+    output_file.close()
+    return output_file_path
+
+
+def init_results_file(output_dir):
+    results_output_filename = 'results.json'
+    return _init_output_json_file(results_output_filename, output_dir)
+
+
+def find_environment_variables():
     compiler_environment_variables = dict()
     if sys.platform == 'win32':
         vswhere_str = '"' + os.path.join('%ProgramFiles(x86)%', 'Microsoft Visual Studio', 'Installer', 'vswhere.exe') \
@@ -93,6 +106,9 @@ def find_compiler_environment_variables():
             if '=' in line:
                 var_description = line.split('=', 1)
                 compiler_environment_variables[var_description[0]] = var_description[1]
+    elif (sys.platform == 'linux') | (sys.platform == 'linux2'):
+        compiler_environment_variables = os.environ.copy()
+        compiler_environment_variables["PATH"] = "/usr/sbin:/sbin:" + compiler_environment_variables["PATH"]
     return compiler_environment_variables
 
 
@@ -102,7 +118,7 @@ def get_program_response(args, env):
     return process.stdout, process.stderr
 
 
-def _get_timedelta_string(delta):
+def get_timedelta_string(delta):
     seconds = delta.total_seconds()
     hours = seconds // 3600
     seconds = seconds % 3600
@@ -111,23 +127,50 @@ def _get_timedelta_string(delta):
     return str(hours) + 'h - ' + str(minutes) + 'm - ' + str(seconds) + 's'
 
 
-def get_metrics_description(metrics):
-    metrics_description = ''
-    for metric, value in metrics.items():
-        if metric != 'start_time' and metric != 'finish_time':
-            metrics_description += '\t' + metric + ': ' + str(value) + '\n'
-    if 'start_time' in metrics.keys() and 'finish_time' in metrics.keys():
-        delta = metrics['finish_time'] - metrics['start_time']
-        metrics_description += '\ttime: ' + _get_timedelta_string(delta) + '\n'
-    return metrics_description
-
-
 class TestRunResult:
     class ResultType(enum.Enum):
         FAIL = 0
         SUCCESS = 1
-        
-    def __init__(self, result_type, test_output):
+
+    def __init__(self, result_type, test_output, test_filename):
         self.result_type = result_type
         self.test_output = test_output
+        self.test_filename = test_filename
 
+
+class Metrics:
+    def __init__(self, tests_count=0, successful_count=0, failed_count=0, successful_tests=None,
+                 failed_tests=None, start_time=datetime.now(), finish_time=None):
+        if failed_tests is None:
+            failed_tests = list()
+        self.tests_count = tests_count
+        self.successful_count = successful_count
+        self.failed_count = failed_count
+        self.successful_tests = successful_tests or list()
+        self.failed_tests = failed_tests or list()
+        self.start_time = start_time
+        self.finish_time = finish_time
+
+    def __str__(self):
+        delta = self.finish_time - self.start_time
+        metrics_description = 'Time: ' + get_timedelta_string(delta) + '\n' + \
+                              'Tests count: ' + str(self.tests_count) + '\n' + \
+                              'Successful count: ' + str(self.successful_count) + '\n' + \
+                              'Failed count: ' + str(self.failed_count) + '\n'
+        return metrics_description
+
+
+class MetricsEncoder(json.JSONEncoder):
+    def default(self, metrics):
+        if isinstance(metrics, Metrics):
+            metrics_dict = metrics.__dict__.copy()
+            metrics_dict.pop('start_time', None)
+            metrics_dict.pop('finish_time', None)
+            return metrics_dict
+        else:
+            return super().default(metrics)
+
+
+def decode_metrics(metrics_dict):
+    return Metrics(metrics_dict['tests_count'], metrics_dict['successful_count'], metrics_dict['failed_count'],
+                   metrics_dict['successful_tests'], metrics_dict['failed_tests'])

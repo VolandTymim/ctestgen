@@ -1,5 +1,5 @@
 import os
-from typing import List
+from collections.abc import Iterable
 from ctestgen.generator import Var, Enum, Include, Define, ControlStructure, Call
 from ctestgen.generator.style_parametres import indent_char, indent_size
 
@@ -71,7 +71,7 @@ class Program:
 
 class CodeBlock:
     def __init__(self, *body):
-        if body and isinstance(body[0], List):
+        if body and isinstance(body[0], Iterable):
             body = body[0]
         self.body = body
 
@@ -93,7 +93,7 @@ class CodeBlock:
 
 class Function:
     def __init__(self, name, return_type, *args):
-        if args and isinstance(args[0], List):
+        if args and isinstance(args[0], Iterable):
             args = args[0]
         self.name = name
         self.return_type = return_type
@@ -123,6 +123,6 @@ class Function:
         return self.name
 
     def __call__(self, *args):
-        if args and isinstance(args[0], List):
+        if args and isinstance(args[0], Iterable):
             args = args[0]
         return Call(self, *args)

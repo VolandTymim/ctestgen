@@ -1,7 +1,7 @@
 import os
 from abc import abstractmethod
 from ctestgen.runner import TestRunner, get_program_response, \
-    find_compiler_environment_variables, TestRunResult
+    find_environment_variables, TestRunResult
 
 
 class BasicTestRunner(TestRunner):
@@ -11,7 +11,7 @@ class BasicTestRunner(TestRunner):
         self.print_test_info = print_test_info
 
     def _get_env(self):
-        return find_compiler_environment_variables()
+        return find_environment_variables()
 
     @abstractmethod
     def _process_program_response(self, test_dir, test_filename, program_response) -> TestRunResult:

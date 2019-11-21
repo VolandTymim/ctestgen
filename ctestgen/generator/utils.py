@@ -1,6 +1,6 @@
 import os
 import json
-from typing import List
+from collections.abc import Iterable
 from ctestgen.generator import For, Assignment, IsLess, Increment, ArrayType, Var, \
     CodeBlock, Define, EnumConstant, ConstVar, ArrayC99, Int
 
@@ -47,7 +47,7 @@ class BitVector:
 
 
 def write_arrays_to_json(name, output_dir, *arrays, is_function_argument=False):
-    if arrays and isinstance(arrays[0], List):
+    if arrays and isinstance(arrays[0], Iterable):
         arrays = arrays[0]
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
