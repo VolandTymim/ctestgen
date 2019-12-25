@@ -1,5 +1,5 @@
 from typing import Tuple
-from collections.abc import Iterable
+from typing import List
 from ctestgen.generator import Define
 from ctestgen.generator.style_parametres import indent_size, indent_char
 
@@ -22,7 +22,7 @@ class EnumConstant:
 class Enum:
     def __init__(self, *constants, name=None):
         """ Usage like Enum(('K', 7), ('M', 8), 'G')"""
-        if isinstance(constants[0], Iterable):
+        if isinstance(constants[0], List):
             constants = constants[0]
         self.constants = [EnumConstant(c[0], c[1]) if isinstance(c, Tuple) else EnumConstant(c) for c in constants]
         self.name = name
@@ -109,7 +109,7 @@ ConstBool = ConstType(Bool)
 class ArrayType(Type):
     def __init__(self, base_type: Type, *dimension_sizes):
         super().__init__(str(base_type))
-        if isinstance(dimension_sizes[0], Iterable):
+        if isinstance(dimension_sizes[0], List):
             dimension_sizes = dimension_sizes[0]
         self.dimension_sizes = dimension_sizes
         self.base_type = base_type

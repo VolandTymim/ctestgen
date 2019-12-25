@@ -1,7 +1,7 @@
 import re
-from collections.abc import Iterable
 from datetime import datetime
 from ctestgen.generator.c_operators import Call
+from typing import List
 
 
 class Include:
@@ -43,7 +43,7 @@ class Define:
         return define_code
 
     def process_macros(self, *args):
-        if args and isinstance(args[0], Iterable):
+        if args and isinstance(args[0], List):
             args = args[0]
         assert len(args) == len(self.macro_arguments), \
             'Macros arguments mismatch'
@@ -62,6 +62,6 @@ class Define:
         return self.macro_name
 
     def __call__(self, *args):
-        if args and isinstance(args[0], Iterable):
+        if args and isinstance(args[0], List):
             args = args[0]
         return Call(self.macro_name, *args)
